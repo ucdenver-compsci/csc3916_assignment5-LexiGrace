@@ -28,7 +28,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(passport.initialize());
 app.use(cors({
-    origin: 'https://csc3916-assignment4-lexigrace.onrender.com'
+    origin: 'https://hw5-1is4.onrender.com'
 }));  
 
 //MongoDB connection URI and port
