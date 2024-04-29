@@ -87,15 +87,34 @@ router.post('/signin', function (req, res) {
 //main getting movies route
 router.get('/movies', authJwtController.isAuthenticated, (req, res) =>{
     //get all movies
-    Movie.find({title: { $exists: true}})
-            .then(movies => {
-                res.status(200).json(movies);
-            })
-            .catch(error => {
-                console.error('Sorry, it looks like there was an error finding movies:', error);
-                res.status(500).json({error: 'An error has occurred while looking for this movies'});
-            });
+    Movie.aggregate([
+        {
+            $lookup: {
+                from: "reviews",
+                localField: "_id",
+                foreignField: "movieId",
+                as: "movie_reviews"
+            }
+        },
+        {
+            $addFields: {
+                avgRating: { $avg: "$movie_reviews.rating" },
+                imageUrl: "$imageUrl" //image link
+            }
+        },
+        {
+            $sort: { avgRating: -1 } 
+        }
+    ]).exec((err, movies) => {
+        if (err) {
+            console.error('Error finding movies:', err);
+            res.status(500).json({ error: 'An error occurred while fetching movies' });
+        } else {
+            res.status(200).json(movies);
+        }
+    });
 });
+
 //save a movie
 router.post('/movies',authJwtController.isAuthenticated,(req, res) =>{
     const {title, releaseDate, genre, actors} = req.body;
@@ -249,7 +268,7 @@ router.get('/movies/:id/reviews', authJwtController.isAuthenticated, (req, res) 
         })
         .catch(error => {
             console.error('Error fetching reviews:', error);
-            res.status(500).json({ error: 'An error occurred while fetching reviews' });
+            res.status(500).json({ error: 'An error occurred while getting reviews' });
         });
 });
 
