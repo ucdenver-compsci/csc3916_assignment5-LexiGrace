@@ -220,7 +220,7 @@ router.delete('/movies/:title', authJwtController.isAuthenticated, (req, res) =>
     .catch (error => res.status(500).json({error: 'An error has unexpectedly occurred, movie not deleted'}));
            
 });
-router.post('/movies/:id/reviews', authJwtController.isAuthenticated,(req,res) =>{
+router.get('/movies/:id/reviews', authJwtController.isAuthenticated, (req, res) => {
     const movieId = req.params.id;
 
     //find all reviews with specific movieId
@@ -230,7 +230,25 @@ router.post('/movies/:id/reviews', authJwtController.isAuthenticated,(req,res) =
         })
         .catch(error => {
             console.error('Error fetching reviews:', error);
-            res.status(500).json({ error: 'An error occurred while getting reviews' });
+            res.status(500).json({ error: 'An error occurred while fetching reviews' });
+        });
+});
+
+router.post('/movies/:id/reviews', authJwtController.isAuthenticated,(req,res) =>{
+    const movieId = req.params.id
+    const { rating, review } = req.body;
+    const username = req.user.username;
+
+    //create new review object and save it to the database
+    const newReview = new Review({ movieId, username, rating, review });
+
+    newReview.save()
+        .then(savedReview => {
+            res.status(200).json({ message: 'Review created!', review: savedReview });
+        })
+        .catch(error => {
+            console.error('Error creating review:', error);
+            res.status(500).json({ error: 'An error occurred while creating the review' });
         });
 });
 router.post('/movies', authJwtController.isAuthenticated, (req, res) => {
