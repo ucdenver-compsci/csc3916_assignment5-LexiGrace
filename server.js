@@ -23,7 +23,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use(passport.initialize());
-
+app.use(cors({
+    origin: 'https://assignment-4-react.onrender.com'
+}));  
 var router = express.Router();
 
 const uri = process.env.DB;
