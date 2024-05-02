@@ -84,9 +84,7 @@ router.post('/signin', function (req, res) {
 });
 
 //movies
-//main getting movies route
-router.get('/movies', authJwtController.isAuthenticated, (req, res) =>{
-    //get all movies
+router.get('/movies', authJwtController.isAuthenticated, (req, res) => {
     Movie.aggregate([
         {
             $lookup: {
@@ -99,7 +97,7 @@ router.get('/movies', authJwtController.isAuthenticated, (req, res) =>{
         {
             $addFields: {
                 avgRating: { $avg: "$movie_reviews.rating" },
-                imageUrl: "$imageUrl" //image link
+                imageUrl: "$imageUrl" //need the image
             }
         },
         {
@@ -134,11 +132,11 @@ router.post('/movies',authJwtController.isAuthenticated,(req, res) =>{
 //get route for movie by ID
 router.get('/movies/:id', authJwtController.isAuthenticated, async (req, res) => {
     const movieId = req.params.id;
-   
+    //checking if review parameter is there
     const includeReviews = req.query.reviews === 'true';
-    console.log('Movie ID: ', movieId);
     try {
         if (includeReviews) { //review parameter is true
+            //aggregation pipeline to fetch movie details with reviews
             const result = await Movie.aggregate([
                 { $match: { _id: mongoose.Types.ObjectId(movieId) } },
                 {
@@ -150,24 +148,24 @@ router.get('/movies/:id', authJwtController.isAuthenticated, async (req, res) =>
                     }
                 },
                 {
-                    //average rating for a movie
+                    //calculating average rating for all reviews for a movie
                     $addFields: {
                         avgRating: { $avg: '$movie_reviews.rating' }
                     }
                 }
             ]);
-            //no movie found/doesn't have title
+            //no movie found or movie doesn't have title
             if (!result.length || !result[0].title) {
                 return res.status(404).json({ error: 'Movie not found' });
             }
-            //movie with review
+            //movie details with reviews
             res.status(200).json(result[0]);
         } 
-        //reviews parameter missing
+        //reviews parameter isn't there
         else {
-            //find movie by ID
+            //finding movie by ID
             const movie = await Movie.findById(movieId);
-            //movie isn't found/doesn't have a title
+            //movie isn't found and doesn't have a title
             if (!movie || !movie.title) {
                 return res.status(404).json({ error: 'Movie not found' });
             }
@@ -226,7 +224,7 @@ router.get('/movies/:id/reviews', authJwtController.isAuthenticated, (req, res) 
     //find all reviews with specific movieId
     Review.find({ movieId })
         .then(reviews => {
-            res.status(200).json(reviews);
+            res.status(200).json({movie: result[0]});
         })
         .catch(error => {
             console.error('Error fetching reviews:', error);
