@@ -16,6 +16,7 @@ let login_details = {
 
 describe('Register, Login User', () => {
    beforeEach((done) => { //Before each test initialize the database to empty
+        //db.userList = [];
         User.deleteOne({ name: 'test'}, function(err, user) {
             if (err) throw err;
         });
@@ -23,6 +24,7 @@ describe('Register, Login User', () => {
     })
 
     after((done) => { //after this test suite empty the database
+        //db.userList = [];
         User.deleteOne({ name: 'test'}, function(err, user) {
             if (err) throw err;
         });

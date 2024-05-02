@@ -11,8 +11,8 @@ chai.should();
 chai.use(chaiHttp);
 
 let login_details = {
-    name: 'test',
-    username: 'email@email.com',
+    name: 'test2',
+    username: 'email2@email.com',
     password: '123@abc'
 }
 
@@ -27,11 +27,11 @@ let movieId = null
 
 describe('Test Review Routes', () => {
    before((done) => { //Before  test initialize the database to empty
-        User.deleteOne({ name: 'test'}, function(err, user) {
+        User.deleteOne({ name: 'test2'}, function(err, user) {
             if (err) throw err;
         });
        
-        Movie.deleteOne({ title: 'Twilight'}, function(err, movie) {
+        Movie.deleteOne({ title: 'Alice in Wonderland'}, function(err, movie) {
             if (err) throw err;
         });
 
@@ -42,11 +42,11 @@ describe('Test Review Routes', () => {
     })
 
     after((done) => { //after this test suite empty the database
-        User.deleteOne({ name: 'test'}, function(err, user) {
+        User.deleteOne({ name: 'test2'}, function(err, user) {
             if (err) throw err;
         });
        
-        Movie.deleteOne({ title: 'Twilight'}, function(err, user) {
+        Movie.deleteOne({ title: 'Alice in Wonderland'}, function(err, user) {
             if (err) throw err;
         });
         Review.deleteOne({ review: review_details.review }, function(err, review) {

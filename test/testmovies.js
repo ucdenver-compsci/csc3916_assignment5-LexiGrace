@@ -10,17 +10,16 @@ chai.should();
 chai.use(chaiHttp);
 
 let login_details = {
-    name: 'test',
-    username: 'email@email.com',
+    name: 'test2',
+    username: 'email2@email.com',
     password: '123@abc'
 }
 
 let movie_details = {
-    title: 'Twilight',
-    releaseDate: 2008,
-    genre: 'Drama',
-    actors: [ { actorName: 'Kristen Stewart', characterName: 'Bella Swan' }, { actorName: 'Robert Pattinson', characterName: 'Edward Cullen' }, { actorName: 'Billy Burke', characterName: 'Charlie Swan' }],
-    imageUrl: "https://www.imdb.com/title/tt1099212/mediaviewer/rm2266076160/"
+    title: 'Alice in Wonderland',
+    releaseDate: 2010,
+    genre: 'Fantasy',
+    actors: [ { actorName: 'Mia Wasikowska', characterName: 'Alice Kingsleigh' }, { actorName: 'Johnny Depp', characterName: 'Mad Hatter' }, { actorName: 'Helena Bonham Carter', characterName: 'Red Queen' } ]
 }
 
 let token = ''
@@ -31,7 +30,7 @@ describe('Test Movie Routes', () => {
             if (err) throw err;
         });
        
-        Movie.deleteOne({ title: 'Twilight'}, function(err, user) {
+        Movie.deleteOne({ title: 'Alice in Wonderland'}, function(err, user) {
             if (err) throw err;
         });
        done();
@@ -42,7 +41,7 @@ describe('Test Movie Routes', () => {
             if (err) throw err;
         });
        
-        Movie.deleteOne({ title: 'Twilight'}, function(err, user) {
+        Movie.deleteOne({ title: 'Alice in Wonderland'}, function(err, user) {
             if (err) throw err;
         });
         done();

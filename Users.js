@@ -4,6 +4,7 @@ var bcrypt = require('bcrypt-nodejs');
 
 mongoose.Promise = global.Promise;
 
+//mongoose.connect(process.env.DB, { useNewUrlParser: true });
 try {
     mongoose.connect( process.env.DB, {useNewUrlParser: true, useUnifiedTopology: true}, () =>
         console.log("connected"));
@@ -11,7 +12,6 @@ try {
     console.log("could not connect");
 }
 mongoose.set('useCreateIndex', true);
-
 //user schema
 var UserSchema = new Schema({
     name: String,
@@ -22,13 +22,13 @@ var UserSchema = new Schema({
 UserSchema.pre('save', function(next) {
     var user = this;
 
-    //hash password
+    //hash the password
     if (!user.isModified('password')) return next();
 
     bcrypt.hash(user.password, null, null, function(err, hash) {
         if (err) return next(err);
 
-        //change password
+        //change the password
         user.password = hash;
         next();
     });
