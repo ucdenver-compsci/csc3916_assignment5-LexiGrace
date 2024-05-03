@@ -1,4 +1,3 @@
-
 let envPath = __dirname + "/../.env"
 require('dotenv').config({path:envPath});
 let chai = require('chai');
