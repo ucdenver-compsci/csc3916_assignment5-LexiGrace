@@ -1,33 +1,33 @@
 /*
-CSC3916 HW5
+CSC3916 HW4
 File: Server.js
 Description: Web API scaffolding for Movie API
  */
-var env = require('dotenv').config();
-var express = require('express');
-var bodyParser = require('body-parser');
-var passport = require('passport');
-var authController = require('./auth');
-var authJwtController = require('./auth_jwt');
-var jwt = require('jsonwebtoken');
-var ExtractJwt = require('passport-jwt').ExtractJwt;
-var cors = require('cors');
-var User = require('./Users');
-var Movie = require('./Movies');
-var Reviews = require('./Reviews');
-var mongoose = require('mongoose');
 
-var app = express();
-app.use(cors());
+const express = require('express');
+const bodyParser = require('body-parser');
+const passport = require('passport');
+const authController = require('./auth');
+const authJwtController = require('./auth_jwt');
+const jwt = require('jsonwebtoken');
+const cors = require('cors');
+const User = require('./Users');
+const Movie = require('./Movies');
+const Review = require('./Reviews');
+
+const router = express.Router();
+
+const app = express();
+app.use(cors({origin: 'https://assignment-4-react.onrender.com'}));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use('/', router);
 
 app.use(passport.initialize());
 
-var router = express.Router();
 
 function getJSONObjectForMovieRequirement(req) {
-    var json = {
+    const json = {
         headers: "No headers",
         key: process.env.UNIQUE_KEY,
         body: "No body"
@@ -44,25 +44,23 @@ function getJSONObjectForMovieRequirement(req) {
     return json;
 }
 
-router.post('/signup', function(req, res) {
+router.post('/signup',
+    function(req, res) {
+
     if (!req.body.username || !req.body.password) {
         res.json({success: false, msg: 'Please include both username and password to signup.'})
     } else {
-        var user = new User({
-            name: req.body.name,
-            username: req.body.username,
-            password: req.body.password
-        });
+        const user = new User();
+        user.name = req.body.name;
+        user.username = req.body.username;
+        user.password = req.body.password;
 
-        user.save(function(err) {
+        user.save(function(err){
             if (err) {
-                if (err.code === 11000) {
+                if (err.code === 11000)
                     return res.json({ success: false, message: 'A user with that username already exists.'});
-                }
-                else {
+                else
                     return res.json(err);
-                }
-                    
             }
 
             res.json({success: true, msg: 'Successfully created new user.'})
@@ -70,20 +68,23 @@ router.post('/signup', function(req, res) {
     }
 });
 
-router.post('/signin', function (req, res) {
-    var userNew = new User();
+router.post('/signin',
+    function (req, res) {
+
+    const userNew = new User();
     userNew.username = req.body.username;
     userNew.password = req.body.password;
 
-    User.findOne({ username: userNew.username }).select('name username password').exec(function(err, user) {
+    User.findOne({ username: userNew.username }).select('name username password').
+    exec(function(err, user) {
         if (err) {
             res.send(err);
         }
 
         user.comparePassword(userNew.password, function(isMatch) {
             if (isMatch) {
-                var userToken = { id: user.id, username: user.username };
-                var token = jwt.sign(userToken, process.env.SECRET_KEY);
+                const userToken = {id: user.id, username: user.username};
+                const token = jwt.sign(userToken, process.env.SECRET_KEY);
                 res.json ({success: true, token: 'JWT ' + token});
             }
             else {
@@ -92,197 +93,222 @@ router.post('/signin', function (req, res) {
         })
     })
 });
+
 router.route('/movies')
-    .get((req, res) => {
-        if (req.query.reviews == "true")
-        {
-            const aggregate = [
+
+    .all(passport.authenticate('jwt', {session : false}))
+
+    .get(function(req, res) {
+        if (req.query.review === 'true') {
+            Movie.aggregate([
+               
+
                 {
                     $lookup: {
-                        from: 'reviews',
-                        localField: '_id',
-                        foreignField: 'movieId',
-                        as: 'reviews'
+                        from: "Review", // name of the foreign collection
+                        localField: "_id", // field in the orders collection
+                        foreignField: "movieId", // field in the items collection
+                        as: "Review" // output array where the joined items will be placed
                     }
                 },
                 {
-                  $addFields: {
-                    avgRating: { $avg: '$reviews.rating' }
-                  }
+                    $addFields: {
+                        avgRating: { $avg: '$reviews.rating' },
+                        imageURL: '$imageURL'
+                    }
                 },
                 {
-                  $sort: { avgRating: -1 }
+                    $sort: { avgRating: -1 }
                 }
-            ];
-            Movie.aggregate(aggregate).exec(function(err, doc) 
-            {
-                if (err)
-                {
-                    console.log(err)
+            ]).exec(function(err, result) {
+                if (err) {
+                    // handle error
+                    if (err)
+                        res.status(500).send({success: false, msg: 'Failed to get reviews.'});
+                } else {
+                    res.json(result);
+                    console.log(result);
                 }
-                res.json({success: true, movies: doc});
             });
-        }
-        else
-        {
-            // Return all movies
-            Movie.find({}).exec(function(err, movies) {
-            if (err) {
-                console.log(err);
-            }
-
-            res.json ({success: true, movies: movies})
-            })   
-        }
-        
-    })
-    .post(authJwtController.isAuthenticated, (req, res) => {
-        Movie.find({title: req.body.title}).exec(function (err, found) {
-            if (err)
-                console.log(err);
-            // movie is found
-            if (found.length != 0)
-                return res.json({success: false, msg: 'Movie already exists.'});
-            else // movie is not found
-            {
-                // Save a single movie
-                var newMovie = new Movie();
-                newMovie.title = req.body.title;
-                newMovie.releaseDate = req.body.releaseDate;
-                newMovie.genre = req.body.genre;
-                newMovie.actors = req.body.actors;
-
-                if (newMovie.releaseDate < 1888 || newMovie.actors.length < 3 || !Movie.schema.path('genre').enumValues.includes(newMovie.genre))
-                    res.status(400).send({success: false, message: 'Unable to add film.'});
-                else
-                {
-                    newMovie.save(function(err){
-                        if (err) {
-                            console.log(err.message);
-                            return res.json(err);
-                        }
-    
-                        res.json({success: true, message: 'Successfully created new movie.'});
-                    });
+        } else {
+            Movie.find(title ? {title} : {}, function(err, result) {
+                if (err) {
+                    // handle error
+                    if (err)
+                        res.status(500).send({success: false, msg: 'Failed to get reviews.'});
+                } else {
+                    res.json(result);
+                    console.log(result);
                 }
+            })
+        }})
+
+    .post(function(req, res) {
+        const movie = new Movie(req.body);
+        movie.save((err, result) => {
+            if (err) {
+                // handle error
+                if (err)
+                    res.status(500).send({success: false, msg: 'Failed to save.'});
+            } else {
+                res.json(result);
+                console.log(result);
             }
         })
     })
-    .all((req, res) => {
-        res.status(405).send({message: 'HTTP method not supported.' });
+
+    .put(function(req, res) {
+        Movie.findOneAndUpdate(req.body._id, req.body, {new: true}, (err,
+                                                                      result) => {
+            if (err) {
+                // handle error
+                res.status(500).send({success: false, msg: 'Failed to update.'});
+            } else {
+                res.json(result);
+                console.log(result);
+            }
+        });
     })
+
+    .delete(function(req, res) {
+        Movie.findByIdAndDelete(req.body._id, (err, result) => {
+            if (err) {
+                // handle error
+                res.status(500).send({success: false, msg: 'Failed to delete.'});
+            } else {
+                res.json(result);
+                console.log(result);
+            }
+        });
+    });
+
+router.route('/reviews')
+
+    .all(passport.authenticate('jwt', {session : false}))
+
+    .get(function(req, res) {
+        Review.find({}).exec(function(err, result) {
+            if (err) {
+                res.status(500).send({success: false, msg: 'Failed to get reviews.'});
+            }
+            res.json(result);
+            console.log(result);
+        })
+    })
+
+    .post(function(req, res) {
+        const review = new Review(req.body);
+        Movie.find({title: req.body.title}, function(err, result) {
+            if (result.length !== 0) {
+                review.movieId = res[0]._id.toString();
+                review.username = req.body.username;
+                review.review = req.body.review;
+                review.rating = req.body.rating;
+
+                review.save(function(err) {
+                    if (err) {
+                        res.status(500).send({success: false, msg: 'Failed to get reviews.'});
+                    } else {
+                        res.json(result);
+                        console.log(result);
+                    }
+                })
+            }
+        })
+        review.save((err, result) => {
+            if (err) {
+                res.status(500).send({success: false, msg: 'Failed to get reviews.'});
+            } else {
+                res.json(result);
+                console.log(result);
+            }
+        });
+    })
+
+    .delete(function(req, res) {
+        Review.findByIdAndDelete(req.body._id, (err, result) => {
+            if (err) {
+                res.status(500).send({success: false, msg: 'Failed to delete review.'});
+            } else {
+                res.json(result);
+                console.log(result);
+            }
+        });
+    });
+
 router.route('/movies/:movieparameter')
-    .get((req, res) => {
-        id = req.params.movieparameter;
-        if (req.query.reviews == "true")
-        {
+    .get(function(req, res) {
+        id = req.params.id;
+
+        if (req.query.review) {
             const aggregate = [
                 {
                     $match: {
-                        _id : mongoose.Types.ObjectId(id)
+                        _id : mongoose.Types.ObjectId(id),
                     }
                 },
                 {
                     $lookup: {
-                        from: 'reviews',
+                        from: 'review',
                         localField: '_id',
                         foreignField: 'movieId',
-                        as: 'reviews'
+                        as: 'review'
                     }
                 },
                 {
-                  $addFields: {
-                    avgRating: { $avg: '$reviews.rating' }
-                  }
+                    $addFields: {
+                        avgRating: {$avg: '$review.rating'}
+                    }
                 }
             ];
-            Movie.aggregate(aggregate).exec(function(err, doc) 
-            {
-                if (err)
-                {
-                    console.log(err)
+            Movie.aggregate(aggregate).exec(function(err, result) {
+                if (err) {
+                    res.status(500).send({success: false, msg: 'Failed to get reviews.'});
+                } else {
+                    res.json(result);
+                    console.log(result);
                 }
-                res.json({success: true, movie: doc[0]});
             });
-        }
-        else
-        {
-            Movie.find({_id: id}).exec(function(err, movie) {  
-                if (err)
-                    console.log(err);
-                if (movie.length == 1)
-                {
-                    res.json ({success: true, movie: movie});
-                }
-                else 
-                {
-                    res.json({success: false});
+        } else {
+            Movie.find({_id: id}).exec(function(err, result) {
+                if (err) {
+                    res.status(500).send({success: false, msg: 'Failed to get reviews.'});
+                } else {
+                    res.json(result);
+                    console.log(result);
                 }
             })
         }
-        
     })
-    .put(authJwtController.isAuthenticated, (req,res) => {
-        title = req.params.movieparameter;
-        // For now I am assuming that a partial match should overwrite the title of the film, only one argument is given to PUT /movies/nameTitle
-        Movie.updateOne({title: {$regex: title}}, {$set: {'title': title}}).exec(function(err, set) {
-            if (err)
-                console.log(err);
-            if (set.n == 1)
-                res.json ({success: true});
-            else
-                res.json ({success: false});
-        })
-    })
-    .delete(authJwtController.isAuthenticated, (req,res) => {
-        title = req.params.movieparameter;
-        Movie.deleteOne({title: title}).exec(function(err, rem) {
-            if (err)
-                console.log(err);
-            if (rem.n == 1)
-                res.json ({success: true});
-            else
-                res.json ({success: false});
-        })
-    })
-    .all((req, res) => {
-        res.status(405).send({message: 'HTTP method not supported.' });
-    })
-router.route('/reviews')
-    .get((req, res) => {
-        // Return all reviews
-        Reviews.find({}).exec(function(err, reviews) {
+
+    .put(function(req, res) {
+        title = req.params.title;
+
+        Movie.updateOne({title: title}, {$set: {title: title}}).exec(function(err, result) {
             if (err) {
-                console.log(err);
+                res.status(500).send({success: false, msg: 'Failed to update review.'});
+            } else {
+                res.json(result);
+                console.log(result);
             }
-
-            res.json ({success: true, reviews: reviews})
         })
     })
-    .post(authJwtController.isAuthenticated, (req, res) => {
-         // Save a single review
-         var newReview = new Reviews();
-         //Find the movieId from title
-         Movie.find({title: req.body.title}).exec(function(err, movie) {
-            if (movie.length != 0)
-            {
-                newReview.movieId = movie[0]._id.toString()
-                newReview.username = req.body.username;
-                newReview.review = req.body.review;
-                newReview.rating = req.body.rating;
-                
-                newReview.save(function(err){
-                    if (err) {
-                        console.log(err.message);
-                        return res.json(err);
-                    }
 
-                    res.json({success: true, message: 'Review created!'});
-                })
+    .delete(function(req, res) {
+        title = req.params.title;
+
+        Movie.deleteOne({title: title}).exec(function(err, result) {
+            if (err) {
+                res.status(500).send({success: false, msg: 'Failed to delete review.'});
+            } else {
+                res.json(result);
+                console.log(result);
             }
-            else
-                res.json({success: false});
-         });
+        })
+    })
+
+    .all(function(req, res) {
+        res.status(405).send({success: false, msg: 'HTTP method unsupported.'});
     })
 
 app.use('/', router);

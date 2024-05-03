@@ -1,7 +1,8 @@
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+const bcrypt = require('bcrypt-nodejs');
 
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-var bcrypt = require('bcrypt-nodejs');
+require('dotenv').config();
 
 mongoose.Promise = global.Promise;
 
@@ -13,15 +14,16 @@ try {
     console.log("could not connect");
 }
 mongoose.set('useCreateIndex', true);
+
 //user schema
-var UserSchema = new Schema({
+const UserSchema = new Schema({
     name: String,
-    username: { type: String, required: true, index: { unique: true }},
-    password: { type: String, required: true, select: false }
+    username: {type: String, required: true, index: {unique: true}},
+    password: {type: String, required: true, select: false}
 });
 
 UserSchema.pre('save', function(next) {
-    var user = this;
+    const user = this;
 
     //hash the password
     if (!user.isModified('password')) return next();
@@ -36,7 +38,7 @@ UserSchema.pre('save', function(next) {
 });
 
 UserSchema.methods.comparePassword = function (password, callback) {
-    var user = this;
+    const user = this;
 
     bcrypt.compare(password, user.password, function(err, isMatch) {
         callback(isMatch);
