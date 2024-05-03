@@ -18,7 +18,9 @@ var Reviews = require('./Reviews');
 var mongoose = require('mongoose');
 
 var app = express();
-app.use(cors());
+app.use(cors({
+    origin: 'https://assignment-4-react.onrender.com'
+}));  
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
