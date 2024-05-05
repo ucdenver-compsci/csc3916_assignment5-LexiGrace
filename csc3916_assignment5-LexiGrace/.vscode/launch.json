@@ -5,33 +5,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "args": [
-                "--timeout",
-                "10000",
-                "--colors",
-                "${workspaceFolder}/test",
-                "--exit"
-            ],
-            "internalConsoleOptions": "openOnSessionStart",
-            "name": "Mocha Tests",
-            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "type": "chrome",
             "request": "launch",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "type": "node"
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Launch Program",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "runtimeArgs": [
-                "--require=dotenv/config"
-            ],
-            "program": "${workspaceFolder}/server.js"
+            "name": "Launch Chrome against localhost",
+            "url": "http://localhost:3000",
+            "webRoot": "${workspaceFolder}"
         }
     ]
 }
