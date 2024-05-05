@@ -18,7 +18,9 @@ var Reviews = require('./Reviews');
 var mongoose = require('mongoose');
 
 var app = express();
-app.use(cors());
+app.use(cors({
+    origin: 'https://assignment-4-react.onrender.com'
+}));  
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
@@ -46,7 +48,7 @@ function getJSONObjectForMovieRequirement(req) {
 
 router.post('/signup', function(req, res) {
     if (!req.body.username || !req.body.password) {
-        res.json({success: false, msg: '/Please include both username and password to signup.'})
+        res.json({success: false, msg: '/Please include both username and password.'})
     } else {
         var user = new User();
         user.name = req.body.name;
@@ -138,7 +140,7 @@ router.route('/movies')
                 console.log(err);
             // movie is found
             if (found.length != 0)
-                return res.json({success: false, msg: 'Movie already exists.'});
+                return res.json({success: false, msg: 'That movie already exists.'});
             else // movie is not found
             {
                 // Save a single movie
@@ -149,7 +151,7 @@ router.route('/movies')
                 newMovie.actors = req.body.actors;
 
                 if (newMovie.releaseDate < 1888 || newMovie.actors.length < 3 || !Movie.schema.path('genre').enumValues.includes(newMovie.genre))
-                    res.status(400).send({success: false, message: 'Unable to add film.'});
+                    res.status(400).send({success: false, message: 'Unable to add this film.'});
                 else
                 {
                     newMovie.save(function(err){
@@ -158,7 +160,7 @@ router.route('/movies')
                             return res.json(err);
                         }
     
-                        res.json({success: true, message: 'Successfully created new movie.'});
+                        res.json({success: true, message: 'Successfully created movie.'});
                     });
                 }
             }

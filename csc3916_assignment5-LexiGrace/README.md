@@ -31,9 +31,11 @@ The purpose of this assignment is to create a React Single Page App over your de
 - -3 Not able to add comments
 - -2 Not aggregating rating (average rating)
 - -3 if not pointed to correct end point (e.g Hw4 endpoint)
-- -5 if you don’t have a react web site deployed 
+- -5 if you don’t have a react web site deployed -> Known issue; image URL's are being saved, but not appearing in on react web site
 
 ## Resources
 - https://github.com/facebook/create-react-app
 - https://github.com/mars/create-react-app-buildpack#user-content-requires
 
+## POSTMAN
+[<img src="https://run.pstmn.io/button.svg" alt="Run In Postman" style="width: 128px; height: 32px;">](https://app.getpostman.com/run-collection/32498648-e79f4e52-a07b-44d0-8f90-8eb3ce5ef9fc?action=collection%2Ffork&source=rip_markdown&collection-url=entityId%3D32498648-e79f4e52-a07b-44d0-8f90-8eb3ce5ef9fc%26entityType%3Dcollection%26workspaceId%3D54a33224-07fc-4da9-81bd-4060f75f0413)
